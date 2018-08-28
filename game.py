@@ -14,6 +14,7 @@ class Game(object):
             self.turnLoop()
 
     def turnLoop(self):
+        #player actions, then monsters.
         for player in self.players:
             game_state = {'players':self.players, 'monsters':self.monsters}
             player.getTurnAction(game_state)
@@ -38,6 +39,8 @@ class Game(object):
                 self.monsters.pop(self.monsters.index(monster))
 
         if not self.monsters:
+            message('Congratulations, you cleared the room!')
+            #right now there arent rooms to explore, so just spawn another monster.
             self.createMonster()
 
     def getPlayer(self):
@@ -52,7 +55,7 @@ class Game(object):
         self.monsters.append(monster)
         messageDirect('A new monster joins the fray!\n', monster)
 
-
+#enables colors in windows
 enableVTWindows()
 
 game = Game()

@@ -3,24 +3,26 @@ from utils import message, messageDirect, formatHPString, generateUID, boolPromp
 class Character(object):
 
     def __init__(self, name, lvl=1, hp=10, race='Gnome', charType='Tunneler'):
-        self.id = generateUID()
-        self.name = name
+        self.id = generateUID() #id currently isnt used for anything, but I thought it might be useful to have a unique id in the future incase need to do character lookups
+        self.name = name #does not have to be unique
         self.race = race
-        self.charType = charType
+        self.charType = charType #this is basically the class
         self.lvl = lvl
         self.hp_max = hp
         self.hp_current = hp
-        self.weapon = None
-        self.strength = 2
-        self.retaliates = False
+        self.weapon = None #this should be a weapon object
+        self.strength = 2 #currently only strength is implemented, will expand to other  RPG stats later
+        self.retaliates = False #this determines if a monster (or player) will automatically attack back after being attacked. This is essentially a free attack, so is pretty strong
         self.dead = False
 
     def __str__(self):
+        #this overwrites the classes default string method, so if you call message(player) this is what will print
         return(message(self.name, 'cyan', returnFormatted=True) + ' is a Lvl ' + message(self.lvl, 'cyan', returnFormatted=True) + ' ' + 
             message(self.race, 'green', returnFormatted=True) + ' ' + message(self.charType, 'green', returnFormatted=True) + ' with ' +
             formatHPString(self.hp_current, self.hp_max) + 'HP')
     
     def calculateDamage(self):
+        #damage is currently always calculated the same. May implement some randomization or critical chance in the future
         if self.weapon:
             damage = self.strength + self.weapon.damage + self.lvl
         else:
@@ -28,6 +30,7 @@ class Character(object):
         return damage
 
     def takeDamage(self, damage):
+        #this can be overridden in the future for classes or monsters that have special abilities
         self.hp_current -= damage
 
     def attack(self, target):

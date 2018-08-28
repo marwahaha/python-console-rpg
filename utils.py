@@ -33,7 +33,6 @@ def messageDirect(*argv):
     for arg in argv:
         print(arg)
 
-
 def calcPercentage(small, big):
     percentage = (small / big) * 10
     return round(percentage, -1)

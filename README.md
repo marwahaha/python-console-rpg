@@ -1,5 +1,12 @@
 # python-console-rpg
 
+Setup Requirement:
+-Python 3.6 or 3.7
+-Termcolor and Random libraries (pip install termcolor, etc.)
+
+Start the game by navigating to the folder is located in and typing `python game.py` (in the console)
+
+
 Game Layout:
 
 All character and object classes should go in models.py
