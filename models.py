@@ -10,7 +10,10 @@ class Character(object):
         self.lvl = lvl
         self.hp_max = hp
         self.hp_current = hp
+        self.ap_max = lvl
+        self.ap_current = lvl
         self.weapon = None #this should be a weapon object
+        self.abilities = [Ability()]
         self.strength = 2 #currently only strength is implemented, will expand to other  RPG stats later
         self.retaliates = False #this determines if a monster (or player) will automatically attack back after being attacked. This is essentially a free attack, so is pretty strong
         self.dead = False
@@ -54,10 +57,12 @@ class Character(object):
         self.lvl += 1
         self.hp_max += 5
         self.hp_current = self.hp_max
+        self.ap_max += 1
+        self.ap_current = self.ap_max
         self.strength += 1
         message(self.name + ' lvls up!')
         message(self.name + ' is now lvl ' + str(self.lvl))
-        message('Gain 5HP and 1 Strength!')
+        message('Gain 5HP and 1 Strength and 1 AP!')
 
 class Player(Character):
 
@@ -72,10 +77,10 @@ class Player(Character):
             return True
 
     def getTurnAction(self, game_state):
-        message('It is ' + self.name + 's turn, what would you like to do?\n1: Attack\n2: Heal\n3: Inspect Enemies - NOT IMPLEMENTED')
+        message('It is ' + self.name + 's turn, what would you like to do?\n1: Attack\n2: Heal\n3: Inspect Enemies - NOT IMPLEMENTED\n4: Use an ability')
         message(self.name + ' currently has ' + formatHPString(self.hp_current, self.hp_max) + 'HP')
         turnAction = stringPrompt('What action would you like to take?', 'number next to action')
-        if turnAction not in ['1', '2', '3']:
+        if turnAction not in ['1', '2', '3', '4']:
             self.getTurnAction(game_state)
         elif turnAction == '1':
             self.attackTurn(game_state)
@@ -84,6 +89,8 @@ class Player(Character):
         elif turnAction == '3':
             message('Inspecting is not implemented yet!', 'red')
             self.getTurnAction(game_state)
+        elif turnAction == '4':
+            self.abilityTurn(game_state)
 
     def heal(self):
         healAmmount = self.hp_max / 2
@@ -110,9 +117,44 @@ class Player(Character):
             message('You must choose a valid monster.', 'red')
             self.getTurnAction(game_state)
 
-        self.attack(monsters[monster_id])        
+        self.attack(monsters[monster_id])
 
-        
+    def abilityTurn(self, game_state):
+        #get the player to select an ability
+        message(self.name + ' currently has these abilities:')
+        x=0
+        for ability in self.abilities:
+            messageDirect(str(x) + ': ' + str(ability.name))
+            x += 1
+        ability_id = stringPrompt('Which ability would you like to use?', 'number next to ability')
+        try:
+            ability_id = int(ability_id)
+            if ability_id >= x or ability_id < 0:
+                raise Exception()
+        except:
+            message('You must choose a valid ability.', 'red')
+            self.getTurnAction(game_state)
+
+        #if the ability requires a target, select one
+        if self.abilities[ability_id].target_required:
+            monsters = sorted(game_state['monsters'], key=lambda x: x.hp_current)
+            message('These monsters are currently in the room:', 'green')
+            x = 0
+            for monster in monsters:
+                messageDirect(str(x) + ': ' + str(monster))
+                x += 1
+            monster_id = stringPrompt('Which would you like to fight?', 'number next to monster')
+            try:
+                monster_id = int(monster_id)
+                if monster_id >= x or monster_id < 0:
+                    raise Exception()
+            except:
+                message('You must choose a valid monster.', 'red')
+                self.getTurnAction(game_state)
+
+            self.abilities[ability_id].activate(monsters[monster_id], self)
+        else:
+            self.abilities[ability_id].activate(None, self)
 
 class Monster(Character):
     
@@ -130,3 +172,34 @@ class Weapon(object):
     def __str__(self):
         return('A ' + self.name + ' which deals ' + str(self.damage) + ' damage per hit.')
         
+
+class Ability(object):
+
+    def __init__(self, name='Fireball', description='A targeted ball of fire.'):
+        self.name = name
+        self.description = description
+        self.damage = 15
+        self.ap_cost = 1
+        self.range = 'room'
+        self.target_required = True
+
+    def deadCheck(self, target, caster):
+        if target.hp_current <= 0:
+            target.dead = True
+            message(target.name + ' is dead!')
+            caster.lvlUp()
+        if target.retaliates and target.dead == False:
+            message(target.name + ' retaliates!')
+            target.attack(caster)
+
+    def activate(self, target, caster):
+        #all abilties should be initiated by the activate method, which should always take 'target' and 'caster' as its main inputs. target can be none if it is self casted, but must be included in the method
+        #this can be overwritten by making a new activate method on child abilility classes
+        target.hp_current -= self.damage
+        caster.ap_current -= self.ap_cost
+        message(caster.name + ' casts fireball! It deals ' + str(self.damage) + ' to ' + target.name)
+        #all activate methods where the target is taking damage should include deadcheck() at the end
+        self.deadCheck(target, caster)
+
+
+
