@@ -33,16 +33,29 @@ Traversing rooms and interacting with objects isnt implemented yet, except for t
 
 
 Roadmap:
+
 -Add abilties
+
 -Add multiple monster types
+
 -Add more player functions
+
 -Build out character model to include experience, ability power, and full stats list
+
 -Build out armor and equipment models
+
 -Enable armor equiping for character
+
 -Implement player inventory
+
 -Build map and navigation system, room based
+
 -Implement 2 differnt game loops, exploration and combat
+
 -Add multiple party members
+
 -Add quests
+
 -Add shops and bank
+
 -Decide on UI type, either ncurses type display, or port everything to a graphical framework
