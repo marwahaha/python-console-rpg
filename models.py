@@ -1,9 +1,11 @@
 from utils import message, messageDirect, formatHPString, generateUID, boolPrompt, stringPrompt
+from abilities import AbilityManager
 
 class Character(object):
 
     def __init__(self, name, lvl=1, hp=10, race='Gnome', charType='Tunneler'):
         self.id = generateUID() #id currently isnt used for anything, but I thought it might be useful to have a unique id in the future incase need to do character lookups
+        self.player = False
         self.name = name #does not have to be unique
         self.race = race
         self.charType = charType #this is basically the class
@@ -12,11 +14,19 @@ class Character(object):
         self.hp_current = hp
         self.ap_max = lvl
         self.ap_current = lvl
-        self.weapon = None #this should be a weapon object
-        self.abilities = [Ability()]
-        self.strength = 2 #currently only strength is implemented, will expand to other  RPG stats later
-        self.retaliates = False #this determines if a monster (or player) will automatically attack back after being attacked. This is essentially a free attack, so is pretty strong
+        self.spellbook = AbilityManager()
+        self.abilities = [self.spellbook.yieldAbility('damage', 0), self.spellbook.yieldAbility('healing', 0)]
         self.dead = False
+        self.retaliates = False #this determines if a monster (or player) will automatically attack back after being attacked. This is essentially a free attack, so is pretty strong
+        self.weapon = None #this should be a weapon object
+        self.armor_score = 0 #currently this is just implemented as a flat reduction on damage taken
+        self.strength = 1 #currently only strength is implemented, will expand to other  RPG stats later
+        self.intelligence = 1
+        self.constitution = 1
+        self.dexterity = 1
+        self.wisdom = 1
+        self.charisma = 1
+
 
     def __str__(self):
         #this overwrites the classes default string method, so if you call message(player) this is what will print
@@ -34,7 +44,13 @@ class Character(object):
 
     def takeDamage(self, damage):
         #this can be overridden in the future for classes or monsters that have special abilities
-        self.hp_current -= damage
+        totalDamage = (damage - self.armor_score)
+        if totalDamage > 0:
+            self.hp_current -= totalDamage
+
+        #this dead check is also done after attacks, which is redudant. can be removed from attacks at some point
+        if self.hp_current <= 0:
+            self.dead = True
 
     def attack(self, target):
         ownDamage = self.calculateDamage()
@@ -48,21 +64,23 @@ class Character(object):
             message(target.name + ' retaliates!')
             target.attack(self)
 
-    def heal(self, healAmmount):
+    def takeHealing(self, healAmmount):
         self.hp_current += healAmmount
         if self.hp_current > self.hp_max:
             self.hp_current = self.hp_max
 
     def lvlUp(self):
         self.lvl += 1
-        self.hp_max += 5
+        self.hp_max += (5 + self.constitution)
         self.hp_current = self.hp_max
-        self.ap_max += 1
+        self.ap_max += (1 + self.wisdom)
         self.ap_current = self.ap_max
         self.strength += 1
-        message(self.name + ' lvls up!')
-        message(self.name + ' is now lvl ' + str(self.lvl))
-        message('Gain 5HP and 1 Strength and 1 AP!')
+        self.intelligence += 1
+        self.constitution += 1
+        self.dexterity += 1
+        self.wisdom += 1
+        self.charisma += 1
 
 class Player(Character):
 
@@ -135,6 +153,10 @@ class Player(Character):
             message('You must choose a valid ability.', 'red')
             self.getTurnAction(game_state)
 
+        if self.abilities[ability_id].ap_cost > self.ap_current:
+            message('Not enough AP to use this ability!', 'red')
+            self.getTurnAction(game_state)
+
         #if the ability requires a target, select one
         if self.abilities[ability_id].target_required:
             monsters = sorted(game_state['monsters'], key=lambda x: x.hp_current)
@@ -156,6 +178,24 @@ class Player(Character):
         else:
             self.abilities[ability_id].activate(None, self)
 
+    def lvlUp(self):
+        self.lvl += 1
+        self.hp_max += (5 + self.constitution)
+        self.hp_current = self.hp_max
+        self.ap_max += (1 + self.wisdom)
+        self.ap_current = self.ap_max
+        self.strength += 1
+        self.intelligence += 1
+        self.constitution += 1
+        self.dexterity += 1
+        self.wisdom += 1
+        self.charisma += 1
+        message(self.name + ' lvls up!')
+        message(self.name + ' is now lvl ' + str(self.lvl))
+        message('Stats Gained:', 'green')
+        message('Strength: 1\nIntelligence: 1\nConstitution: 1\nDexterity: 1\nWisdom: 1\nCharisma: 1', 'green')
+        message('Gain ' + str(5 + self.constitution) + 'HP and ' + str(1 + self.intelligence) + 'AP', 'green')
+
 class Monster(Character):
     
     def turnAction(self, game_state):
@@ -173,33 +213,7 @@ class Weapon(object):
         return('A ' + self.name + ' which deals ' + str(self.damage) + ' damage per hit.')
         
 
-class Ability(object):
 
-    def __init__(self, name='Fireball', description='A targeted ball of fire.'):
-        self.name = name
-        self.description = description
-        self.damage = 15
-        self.ap_cost = 1
-        self.range = 'room'
-        self.target_required = True
-
-    def deadCheck(self, target, caster):
-        if target.hp_current <= 0:
-            target.dead = True
-            message(target.name + ' is dead!')
-            caster.lvlUp()
-        if target.retaliates and target.dead == False:
-            message(target.name + ' retaliates!')
-            target.attack(caster)
-
-    def activate(self, target, caster):
-        #all abilties should be initiated by the activate method, which should always take 'target' and 'caster' as its main inputs. target can be none if it is self casted, but must be included in the method
-        #this can be overwritten by making a new activate method on child abilility classes
-        target.hp_current -= self.damage
-        caster.ap_current -= self.ap_cost
-        message(caster.name + ' casts fireball! It deals ' + str(self.damage) + ' to ' + target.name)
-        #all activate methods where the target is taking damage should include deadcheck() at the end
-        self.deadCheck(target, caster)
 
 
 

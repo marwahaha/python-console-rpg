@@ -74,3 +74,9 @@ def stringPrompt(promptMessage, inputType):
     message(promptMessage, 'blue')
     answer = input('Enter ' + inputType + ' : ')
     return answer
+
+def characterLeveler(character, desiredLvl):
+    #call character.lvlUp until the character has reached desired lvl
+    if desiredLvl > character.lvl:
+        while character.lvl < desiredLvl:
+            character.lvlUp()

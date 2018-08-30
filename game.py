@@ -15,6 +15,7 @@ class Game(object):
 
     def turnLoop(self):
         #player actions, then monsters.
+        message('-----------------------------', 'cyan')
         for player in self.players:
             game_state = {'players':self.players, 'monsters':self.monsters}
             player.getTurnAction(game_state)
@@ -47,11 +48,13 @@ class Game(object):
         name = stringPrompt('What is your name?', 'your Name')
         player = Player(name, race = 'Human', charType = 'Warrior')
         player.weapon = Weapon()
+        player.player = True
         self.players.append(player)
         messageDirect(player)
 
     def createMonster(self):
         monster = Monster('Rabid Gnome')
+        characterLeveler(monster, self.players[0].lvl)
         self.monsters.append(monster)
         messageDirect('A new monster joins the fray!\n', monster)
 
