@@ -34,7 +34,7 @@ Traversing rooms and interacting with objects isnt implemented yet, except for t
 
 Roadmap:
 
--Add abilties
+-Add abilities
 
 -Add multiple monster types
 
